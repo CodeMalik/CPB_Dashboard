@@ -12,6 +12,7 @@ import {
   UserPlus,
   LogOut,
   ArrowRightLeft,
+  UserCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -63,6 +64,11 @@ const data = {
           title: "Redirections",
           icon: ArrowRightLeft,
           url: "/redirections",
+        },
+        {
+          title: "Visitors",
+          icon: UserCheck ,
+          url: "/visitors",
         },
       ],
     },
