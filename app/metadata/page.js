@@ -108,6 +108,7 @@ export default function MetadataPage() {
     setValue("keywords", metadata.keywords);
     setValue("canonicalUrl", metadata.canonicalUrl);
     setValue("ogImage", metadata.ogImage);
+    setValue("scheme", metadata.scheme || "");
   };
 
   const handleDelete = async (identifier) => {
@@ -212,6 +213,19 @@ export default function MetadataPage() {
               <Input id="ogImage" {...register("ogImage")} />
             </div>
 
+            {/* Add Scheme Field Here */}
+            <div>
+              <Label htmlFor="scheme">Scheme</Label>
+              <Input 
+                id="scheme" 
+                {...register("scheme")}
+                placeholder="e.g., https, http, product"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Schema markup type (optional)
+              </p>
+            </div>
+
             <div className="md:col-span-2 flex justify-end space-x-2">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -246,6 +260,7 @@ export default function MetadataPage() {
                     <TableHead>Identifier</TableHead>
                     <TableHead>Page Type</TableHead>
                     <TableHead>Meta Title</TableHead>
+                    <TableHead>Scheme</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -254,7 +269,8 @@ export default function MetadataPage() {
                     <TableRow key={metadata._id}>
                       <TableCell>{metadata.identifier}</TableCell>
                       <TableCell>{metadata.pageType}</TableCell>
-                      <TableCell>{metadata.metaTitle}</TableCell>
+                      <TableCell className="max-w-xs truncate">{metadata.metaTitle}</TableCell>
+                      <TableCell>{metadata.scheme || "-"}</TableCell>
                       <TableCell className="flex space-x-2">
                         <Button variant="outline" size="sm" onClick={() => handleEdit(metadata)}>
                           Edit

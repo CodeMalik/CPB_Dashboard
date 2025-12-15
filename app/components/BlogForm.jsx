@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import RichTextEditor from './RichTextEditor';
 
 export default function BlogForm({ initialData, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
@@ -17,10 +18,12 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
+  const [wordCount, setWordCount] = useState(0);
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     if (initialData) {
-      console.log('Initial Data:', initialData); // Debug log
+      console.log('Initial Data:', initialData);
       setFormData({
         title: initialData.title || '',
         excerpt: initialData.excerpt || '',
@@ -34,6 +37,8 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
       });
       if (initialData.coverImage?.url) {
         setPreviewImage(initialData.coverImage.url);
+        // If you have image dimensions in initialData, you can set them here
+        // setImageSize({ width: initialData.coverImage.width, height: initialData.coverImage.height });
       }
     }
   }, [initialData]);
@@ -46,8 +51,12 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
     }));
   };
 
-  const handleContentChange = (e) => {
-    setFormData(prev => ({ ...prev, content: e.target.value }));
+  const handleContentChange = (content) => {
+    setFormData(prev => ({ ...prev, content }));
+  };
+
+  const handleWordCountChange = (count) => {
+    setWordCount(count);
   };
 
   const handleImageChange = (e) => {
@@ -55,10 +64,17 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
     if (file) {
       setFormData(prev => ({ ...prev, coverImage: file }));
       
-      // Create preview
+      // Create preview and check image dimensions
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result);
+        
+        // Create an image element to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          setImageSize({ width: img.width, height: img.height });
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
@@ -159,17 +175,18 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
 
           {/* Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Content *
-            </label>
-            <textarea
-              name="content"
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Content *
+              </label>
+              <div className="text-sm text-gray-500">
+                {wordCount} words • {Math.ceil(wordCount / 200)} min read
+              </div>
+            </div>
+            <RichTextEditor
               value={formData.content}
               onChange={handleContentChange}
-              required
-              rows={12}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all resize-none"
-              placeholder="Write your blog content here..."
+              onWordCountChange={handleWordCountChange}
             />
           </div>
         </div>
@@ -197,6 +214,22 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
                     alt="Preview"
                     className="w-full h-48 object-cover rounded-lg mb-3"
                   />
+                  <div className="space-y-2 mb-3">
+                    {imageSize.width > 0 && imageSize.height > 0 && (
+                      <div className={`text-sm px-3 py-1 rounded-md ${imageSize.width >= 1200 && imageSize.height >= 630 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        <p className="font-medium">Image Size: {imageSize.width} × {imageSize.height}px</p>
+                        {imageSize.width < 1200 || imageSize.height < 630 ? (
+                          <p className="text-xs mt-1">
+                            ⚠️ Minimum recommended: 1200 × 630px
+                          </p>
+                        ) : (
+                          <p className="text-xs mt-1">
+                            ✓ Meets recommended size
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <label
                       htmlFor="coverImage"
@@ -208,6 +241,7 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
                       type="button"
                       onClick={() => {
                         setPreviewImage('');
+                        setImageSize({ width: 0, height: 0 });
                         setFormData(prev => ({ ...prev, coverImage: null }));
                       }}
                       className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors"
@@ -223,7 +257,14 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                     <p className="text-gray-600 font-medium">Upload Cover Image</p>
-                    <p className="text-gray-500 text-sm mt-1">Recommended: 1200 x 630px</p>
+                    <div className="mt-2 space-y-1 text-center">
+                      <p className="text-gray-500 text-sm">Recommended size:</p>
+                      <p className="text-red-600 text-sm font-semibold">1200 × 630 pixels</p>
+                      <p className="text-gray-500 text-xs mt-2">
+                        Minimum: 800 × 420 pixels<br />
+                        Aspect Ratio: 1.91:1 (horizontal)
+                      </p>
+                    </div>
                   </div>
                 </label>
               )}
