@@ -40,7 +40,7 @@ export default function EntityForm({
       : initialData?.image || null
   );
   const [heroImage, setHeroImage] = useState(initialData?.heroImage || null);
-  
+
   // Initialize additional images with proper structure
   const [additionalImages, setAdditionalImages] = useState([
     { url: "", alt: "", title: "", caption: "", description: "", public_id: "" },
@@ -61,33 +61,53 @@ export default function EntityForm({
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
       name: initialData?.name || "",
       slug: initialData?.slug || "",
       heading: initialData?.heading || "",
+      h1: initialData?.h1 || "",
       shortDescription: initialData?.shortDescription || "",
       tagline: initialData?.tagline || "",
       categorySlug: initialData?.categorySlug || "",
     },
   });
 
-  // Initialize additional images when initialData changes
+  // Sync form values and other states when initialData changes
   useEffect(() => {
-    if (entityType === "products" && initialData?.images) {
-      // Ensure we always have exactly 3 additional images
-      const initialImages = [...initialData.images];
-      
-      // Fill empty slots if there are less than 3 images
-      while (initialImages.length < 3) {
-        initialImages.push({ url: "", alt: "", title: "", caption: "", description: "", public_id: "" });
+    if (initialData && Object.keys(initialData).length > 0) {
+      reset({
+        name: initialData?.name || "",
+        slug: initialData?.slug || "",
+        heading: initialData?.heading || "",
+        h1: initialData?.h1 || "",
+        shortDescription: initialData?.shortDescription || "",
+        tagline: initialData?.tagline || "",
+        categorySlug: initialData?.categorySlug || "",
+      });
+
+      setLongDescription(initialData?.longDescription || "");
+
+      const newImage = entityType === "category"
+        ? initialData?.homeImage || null
+        : initialData?.image || null;
+      setImage(newImage);
+
+      setHeroImage(initialData?.heroImage || null);
+      setCategorySlug(initialData?.categorySlug || "");
+
+      // Handle additional images for products
+      if (entityType === "products") {
+        const initialImages = initialData?.images ? [...initialData.images] : [];
+        while (initialImages.length < 3) {
+          initialImages.push({ url: "", alt: "", title: "", caption: "", description: "", public_id: "" });
+        }
+        setAdditionalImages(initialImages.slice(0, 3));
       }
-      
-      // Take only first 3 images
-      setAdditionalImages(initialImages.slice(0, 3));
     }
-  }, [initialData, entityType]);
+  }, [initialData, reset, entityType]);
 
   useEffect(() => {
     if (entityType === "products") {
@@ -148,7 +168,7 @@ export default function EntityForm({
   // Function to handle additional image changes
   const handleAdditionalImageChange = (index, field, value) => {
     const updatedImages = [...additionalImages];
-    
+
     if (field === 'image') {
       // When the entire image object changes (from ImageUpload)
       if (value === null) {
@@ -167,18 +187,18 @@ export default function EntityForm({
         [field]: value
       };
     }
-    
+
     setAdditionalImages(updatedImages);
   };
 
   // Process all additional images
   const processAdditionalImages = async () => {
     const processedImages = [];
-    
+
     for (let i = 0; i < additionalImages.length; i++) {
       const currentImage = additionalImages[i];
       const initialImageData = initialData?.images?.[i] || null;
-      
+
       // If image has no URL and no file, it's empty - skip it
       if (!currentImage.url && !currentImage.file) {
         // If there was an initial image, delete it
@@ -202,7 +222,7 @@ export default function EntityForm({
         processedImages.push(currentImage);
       }
     }
-    
+
     return processedImages;
   };
 
@@ -228,6 +248,7 @@ export default function EntityForm({
   };
 
   const onSubmit = async (data) => {
+    console.log("Form data submitted:", data);
     setIsLoading(true);
     try {
       const newImageData = await processImage(
@@ -255,13 +276,13 @@ export default function EntityForm({
         longDescription,
         ...(entityType === "category"
           ? { homeImage: newImageData, heroImage: newHeroImageData }
-          : { 
-              image: newImageData,
-              ...(entityType === "products" && { 
-                images: processedAdditionalImages 
-              })
-            }),
-        ...(entityType === "products" && { 
+          : {
+            image: newImageData,
+            ...(entityType === "products" && {
+              images: processedAdditionalImages
+            })
+          }),
+        ...(entityType === "products" && {
           categorySlug,
         }),
       };
@@ -286,8 +307,7 @@ export default function EntityForm({
       }
 
       toast.success(
-        `${
-          entityType.charAt(0).toUpperCase() + entityType.slice(1)
+        `${entityType.charAt(0).toUpperCase() + entityType.slice(1)
         } ${initialData?._id ? "Updated" : "Created"} Successfully`
       );
 
@@ -355,6 +375,18 @@ export default function EntityForm({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="h1">H1 Tag</Label>
+          <Input
+            id="h1"
+            placeholder={`${entityType} H1`}
+            {...register("h1")}
+          />
+          {errors.h1 && (
+            <p className="text-sm text-red-500">{errors.h1.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="description">Short Description</Label>
           <Textarea
             id="description"
@@ -415,7 +447,7 @@ export default function EntityForm({
             )}
           </div>
         )}
-        
+
         {/* Main Product Image + 3 Additional Images */}
         {entityType === "products" && (
           <div className="space-y-6">
@@ -424,7 +456,7 @@ export default function EntityForm({
               <p className="text-sm text-muted-foreground mb-6">
                 Upload up to 4 images for your product. The first image will be used as the main product image.
               </p>
-              
+
               {/* Main Product Image */}
               <div className="space-y-4 mb-8">
                 <h4 className="font-medium text-base">Main Product Image</h4>
@@ -461,12 +493,12 @@ export default function EntityForm({
                   {additionalImages.map((additionalImage, index) => (
                     <div key={index} className="border rounded-lg p-4 space-y-4 bg-muted/5">
                       <h5 className="font-medium">Additional Image {index + 1}</h5>
-                      
+
                       <div className="space-y-2">
                         <Label>Image</Label>
                         <ImageUpload
                           initialImage={additionalImage}
-                          onImageChange={(image) => 
+                          onImageChange={(image) =>
                             handleAdditionalImageChange(index, 'image', image)
                           }
                         />
@@ -494,7 +526,7 @@ export default function EntityForm({
                           <Input
                             placeholder="Enter alt text for accessibility"
                             value={additionalImage.alt || ""}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               handleAdditionalImageChange(index, 'alt', e.target.value)
                             }
                           />
@@ -505,7 +537,7 @@ export default function EntityForm({
                           <Input
                             placeholder="Enter image caption"
                             value={additionalImage.caption || ""}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               handleAdditionalImageChange(index, 'caption', e.target.value)
                             }
                           />
@@ -517,7 +549,7 @@ export default function EntityForm({
                         <Input
                           placeholder="Enter image title"
                           value={additionalImage.title || ""}
-                          onChange={(e) => 
+                          onChange={(e) =>
                             handleAdditionalImageChange(index, 'title', e.target.value)
                           }
                         />
@@ -528,7 +560,7 @@ export default function EntityForm({
                         <Textarea
                           placeholder="Enter detailed description"
                           value={additionalImage.description || ""}
-                          onChange={(e) => 
+                          onChange={(e) =>
                             handleAdditionalImageChange(index, 'description', e.target.value)
                           }
                           rows={3}
@@ -565,7 +597,7 @@ export default function EntityForm({
                     size="sm"
                     className="bg-blue-500 text-white hover:bg-blue-200 "
                     onClick={() => handleDownloadImage(
-                      image.url, 
+                      image.url,
                       entityType === "category" ? "main-category-image" : "product-image"
                     )}
                   >
