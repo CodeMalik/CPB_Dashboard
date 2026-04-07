@@ -383,12 +383,12 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
         </div>
       </div>
 
-      {/* Form Actions */}
-      <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+      {/* Form Actions - Sticky at bottom */}
+      <div className="sticky bottom-0 z-10 bg-white bg-opacity-90 backdrop-blur-sm border-t border-gray-200 py-4 mt-8 flex justify-end gap-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.1)]">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          className="px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors"
           disabled={loading}
         >
           Cancel
@@ -396,7 +396,7 @@ export default function BlogForm({ initialData, onSubmit, onCancel }) {
         <button
           type="submit"
           disabled={loading || !formData.title || !formData.excerpt || !formData.content}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${loading || !formData.title || !formData.excerpt || !formData.content ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
+          className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${loading || !formData.title || !formData.excerpt || !formData.content ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200'}`}
         >
           {loading ? (
             <>
